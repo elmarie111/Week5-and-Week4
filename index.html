@@ -7,47 +7,32 @@
     <link rel="stylesheet" href="mystyle.css">
 </head>
 <body>
-    <div class="border-container">
-        <main>
-            <!-- Add Student Section -->
-            <label for="name-input">Name:</label>
-            <input type="text" id="name-input">
-            <label for="program-input">Program:</label>
-            <input type="text" id="program-input">
-            <button id="addname-btn">Add Student</button>
-            <br><br>
-
-            <!-- Search Section -->
-            <input type="text" placeholder="Search Name here" id="search-input">
-            <button id="search-btn">Search</button>
-            <br><br>
-        </main>
-        
-        <!-- Table Section -->
-        <table id="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>NAME</th>
-                    <th>PROGRAM</th>
-                    <th>DATE ADDED</th>
-                    <th>DELETE</th>
-                    <th>EDIT</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <br>
-
-        <!-- Update Section -->
-        <div id="update-row" class="hidden">
-            <input type="hidden" id="update-id">
-            <label for="update-name-input">Name:</label>
-            <input type="text" id="update-name-input">
-            <label for="update-program-input">Program:</label>
-            <input type="text" id="update-program-input">
-            <button id="update-row-btn">Update</button>
-        </div>
+    <main>
+        <label>Name</label>
+        <input type="text" id="name-input">
+        <button id="addname-btn">Add Name</button>
+    </main>
+    <br>
+    <div>
+        <input type="text" placeholder="Search Name here" id="search-input">
+        <button id="search-btn">Search</button>
+    </div>
+    <table id="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>NAME</th>
+                <th>DATE ADDED</th>
+                <th>DELETE</th>
+                <th>EDIT</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div id="update-row" hidden>
+        <label for="update-name-input">New Name</label>
+        <input type="text" id="update-name-input">
+        <button id="update-row-btn">Update</button>
     </div>
     <script src="index.js"></script>
 </body>

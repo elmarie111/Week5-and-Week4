@@ -16,9 +16,4 @@ main {
    th, td {
     padding: 5px;
    }
-   #update-row {
-    text-align: center; /* Center the content inside the update-row */
-    margin-top: 20px; /* Space above the update section */
-}
-
    

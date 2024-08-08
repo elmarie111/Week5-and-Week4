@@ -1,148 +1,131 @@
 document.addEventListener('DOMContentLoaded', function () {
     fetch('http://localhost:5000/getAll')
     .then(response => response.json())
-    .then(data => loadHTMLTable(data['data']))
-    .catch(error => console.error('Error loading initial data:', error));
+    .then(data => loadHTMLTable(data['data']));
 });
 
-const addBtn = document.querySelector('#addname-btn');
+const addBtn = document.querySelector('#addname-btn'); // Fixed ID
 addBtn.onclick = function () {
     const nameInput = document.querySelector('#name-input');
-    const programInput = document.querySelector('#program-input');
-    const name = nameInput.value.trim();
-    const program = programInput.value.trim();
+    const name = nameInput.value;
     nameInput.value = "";
-    programInput.value = "";
-
-    if (name && program) {
-        fetch('http://localhost:5000/insert', {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            method: 'POST',
-            body: JSON.stringify({ name: name, program: program })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                fetch('http://localhost:5000/getAll') // Refresh table
+    fetch('http://localhost:5000/insert', {
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        method: 'POST',
+        body: JSON.stringify({ name: name })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            fetch('http://localhost:5000/getAll') // Refresh table
                 .then(response => response.json())
-                .then(data => loadHTMLTable(data['data']))
-                .catch(error => console.error('Error refreshing table after insert:', error));
-            } else {
-                console.error('Insert failed:', data);
+                .then(data => loadHTMLTable(data['data']));
+        }
+    });
+}
+
+function insertRowIntoTable(data) {
+    console.log(data);
+    const table = document.querySelector('table tbody');
+    const isTableData = table.querySelector('.no-data');
+    let tableHtml = "<tr>";
+    for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+            if (key === 'date_added') {
+                data[key] = new Date(data[key]).toLocaleString();
             }
-        })
-        .catch(error => console.error('Error inserting data:', error));
+            tableHtml += `<td>${data[key]}</td>`;
+        }
+    }
+    tableHtml += `<td><button class="delete-row-btn" data-id=${data.id}>Delete</button></td>`;
+    tableHtml += `<td><button class="edit-row-btn" data-id=${data.id}>Edit</button></td>`;
+    tableHtml += "</tr>";
+    if (isTableData) {
+        table.innerHTML = tableHtml;
     } else {
-        alert('Name and Program cannot be empty!');
+        const newRow = table.insertRow();
+        newRow.innerHTML = tableHtml;
     }
 }
 
 function loadHTMLTable(data) {
     const table = document.querySelector('table tbody');
     if (data.length === 0) {
-        table.innerHTML = "<tr><td class='no-data' colspan='6'>No Data</td></tr>";
+        table.innerHTML = "<tr><td class='no-data' colspan='5'>No Data</td></tr>";
         return;
     }
     let tableHtml = "";
-    data.forEach(function ({id, name, program, date_added}) {
+    data.forEach(function ({id, name, date_added}) {
         tableHtml += "<tr>";
         tableHtml += `<td>${id}</td>`;
         tableHtml += `<td>${name}</td>`;
-        tableHtml += `<td>${program}</td>`;
         tableHtml += `<td>${new Date(date_added).toLocaleString()}</td>`;
-        tableHtml += `<td><button class="delete-row-btn" data-id="${id}">Delete</button></td>`;
-        tableHtml += `<td><button class="edit-row-btn" data-id="${id}">Edit</button></td>`;
+        tableHtml += `<td><button class="delete-row-btn" data-id=${id}>Delete</button></td>`;
+        tableHtml += `<td><button class="edit-row-btn" data-id=${id}>Edit</button></td>`;
         tableHtml += "</tr>";
     });
     table.innerHTML = tableHtml;
 }
 
 document.querySelector('table tbody').addEventListener('click', function(event) {
-    if (event.target.classList.contains('delete-row-btn')) {
-        const id = event.target.getAttribute("data-id");
-        fetch(`http://localhost:5000/delete/${id}`, {
-            method: 'DELETE'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                fetch('http://localhost:5000/getAll') // Refresh table
-                .then(response => response.json())
-                .then(data => loadHTMLTable(data['data']))
-                .catch(error => console.error('Error refreshing table after delete:', error));
-            } else {
-                console.error('Delete failed:', data);
-            }
-        })
-        .catch(error => console.error('Error deleting data:', error));
+    if (event.target.className === "delete-row-btn") {
+        deleteRowById(event.target.dataset.id);
     }
-
-    if (event.target.classList.contains('edit-row-btn')) {
-        const id = event.target.getAttribute("data-id");
-        fetch(`http://localhost:5000/getById/${id}`) // Fetch record details by ID
-        .then(response => response.json())
-        .then(data => {
-            if (data) {
-                const { name, program } = data;
-                document.querySelector('#update-id').value = id;
-                document.querySelector('#update-name-input').value = name;
-                document.querySelector('#update-program-input').value = program;
-                document.querySelector('#update-row').classList.remove('hidden'); // Show update section
-            } else {
-                console.error('Failed to fetch record details:', data);
-            }
-        })
-        .catch(error => console.error('Error fetching record details:', error));
+    if (event.target.className === "edit-row-btn") {
+        handleEditRow(event.target.dataset.id);
     }
 });
 
 const updateBtn = document.querySelector('#update-row-btn');
-updateBtn.onclick = function () {
-    const id = document.querySelector('#update-id').value;
-    const name = document.querySelector('#update-name-input').value.trim();
-    const program = document.querySelector('#update-program-input').value.trim();
+const searchBtn = document.querySelector('#search-btn');
 
-    if (name && program) {
-        fetch('http://localhost:5000/update', {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                id: id,
-                name: name,
-                program: program
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                fetch('http://localhost:5000/getAll') // Refresh table
-                .then(response => response.json())
-                .then(data => loadHTMLTable(data['data']))
-                .catch(error => console.error('Error refreshing table after update:', error));
-                document.querySelector('#update-row').classList.add('hidden'); // Hide update form
-            } else {
-                console.error('Update failed:', data);
-            }
-        })
-        .catch(error => console.error('Error updating data:', error));
-    } else {
-        alert('Name and Program cannot be empty!');
-    }
+searchBtn.onclick = function() {
+    const searchValue = document.querySelector('#search-input').value;
+    fetch('http://localhost:5000/search/' + searchValue)
+    .then(response => response.json())
+    .then(data => loadHTMLTable(data['data']));
 }
 
-const searchBtn = document.querySelector('#search-btn');
-searchBtn.onclick = function () {
-    const searchInput = document.querySelector('#search-input').value.trim();
-    if (searchInput) {
-        fetch(`http://localhost:5000/search/${encodeURIComponent(searchInput)}`)
-        .then(response => response.json())
-        .then(data => loadHTMLTable(data['data']))
-        .catch(error => console.error('Error searching data:', error));
-    } else {
-        alert('Search input cannot be empty!');
-    }
+function deleteRowById(id) {
+    fetch('http://localhost:5000/delete/' + id, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            fetch('http://localhost:5000/getAll') // Refresh table
+                .then(response => response.json())
+                .then(data => loadHTMLTable(data['data']));
+        }
+    });
+}
+
+function handleEditRow(id) {
+    const updateSection = document.querySelector('#update-row');
+    updateSection.hidden = false;
+    document.querySelector('#update-name-input').dataset.id = id;
+}
+
+updateBtn.onclick = function() {
+    const updateNameInput = document.querySelector('#update-name-input');
+    fetch('http://localhost:5000/update', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id: updateNameInput.dataset.id,
+            name: updateNameInput.value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            fetch('http://localhost:5000/getAll') // Refresh table
+                .then(response => response.json())
+                .then(data => loadHTMLTable(data['data']));
+        }
+    });
 }
